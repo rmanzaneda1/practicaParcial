@@ -1,5 +1,6 @@
 module Library where
 import PdePreludat
+import qualified GHC.TypeNats as filter
 
 doble :: Number -> Number
 doble numero = numero + numero
@@ -12,23 +13,25 @@ data Postre = UnPostre {
 
 bizcocho :: Postre
 bizcocho = UnPostre ["borracho", "fruta", "crema"] 100 25
+melaza :: Postre
+melaza = UnPostre ["melaza"] 50 0
 
 type Hechizo = Postre -> Postre
 
 incendio :: Postre -> Postre
-incendio postre = calentar 1.perderPesoPorc 5
+incendio = calentar 1 . perderPesoPorc 5
 
 immobulus :: Postre -> Postre
 immobulus postre = postre { temperatura = 0}
 
 winLeviousa :: Postre -> Postre
-winLeviousa postre = agregarSabor "concentrado".perderPesoPorc 10
+winLeviousa = agregarSabor "concentrado". perderPesoPorc 10
 
 diffindo :: Number -> Postre -> Postre
 diffindo porcentajePerdido postre = perderPesoPorc porcentajePerdido postre
 
 riddikulus :: String -> Postre -> Postre
-riddikulus sabornuevo = agregarSabor(reverse sabornuevo)
+riddikulus sabornuevo = agregarSabor (reverse sabornuevo)
 
 avaKedavra :: Postre -> Postre
 avaKedavra = immobulus . sacarSabores
@@ -49,61 +52,62 @@ agregarSabor saborextra postre = postre { sabores = saborextra : sabores postre}
 sacarSabores :: Postre -> Postre
 sacarSabores postre = postre { sabores = []}
 
-
-
 estaCongelado :: Postre -> Bool
-estaCongelado postre = (<0).temperatura postre
+estaCongelado  = (<=0).temperatura
 
 tieneAlgunSabor :: Postre -> Bool
-tieneAlgunSabor postre = (>0).length.sabores postre
+tieneAlgunSabor = (>0).length.sabores
 
-estaListo :: Postre -> Bool
-estaListo postre = not (estaCongelado postre) && tieneAlgunSabor postre && (peso postre > 0)
+
+-- C)
+estaListo :: Hechizo -> Postre -> Bool
+--estaListo postre = not (estaCongelado postre) && tieneAlgunSabor postre && (peso postre > 0)
+estaListo hechizo postre = not (estaCongelado (hechizo postre)) && tieneAlgunSabor (hechizo postre) && (peso (hechizo postre) > 0)
 
 estanListos :: Hechizo -> [Postre] -> Bool
-estanListos hechizo postres = all (estaListo.hechizo)  postres
+estanListos = all.estaListo
 
+-- D) Dado un conjunto de postres en la mesa, conocer el peso promedio de los postres listos.
 
--- {ConjuntoDePostresListos :: Hechizo -> [Postre] -> [Postre]
---ConjuntoDePostresListos hechizo postres = filter (estaListo.hechizo) postres
+promedioPostresListos :: Hechizo -> [Postre] -> Bool
+promedioPostresListos = (pesoPostresListos) 'div' (length conjuntoDePostresListos)
 
+--pesoPostresListos :: Hechizo -> [Postre] -> Number
+--pesoPostresListos =  sum .peso.(filter estaListo)
 
-promedio :: [Number] -> Number
-promedio nums = sum nums / length nums
-
-pesoPromedioPostresListos :: [Postre] -> Number
-pesoPromedioPostresListos postres =  promedio . map peso .filter estaListo postres
+--conjuntoDePostresListos :: Hechizo -> [Postre] -> [Postre]
+--conjuntoDePostresListos hechizo postres = filter estaListo postres
 
 --2 MAGOS
 
 data Mago = UnMago {
-	hechizosaprendidos :: [Hechizo] ,
-	horrorcruxes :: Number
-	} deriving (Show, Eq)
-	
+        hechizosaprendidos :: [Hechizo] ,
+        horrorcruxes :: Number
+        } deriving (Show, Eq)
+
 -- A hacer que un mago asista a una clase y PRACTIQUE un echizo sobre un POSTRE se espera obtener el MAGO y agregar el hechizo a su lista de hechizos aprendidos
 -- Ademas si el resultado del echizo es el mismo de aplicar avadakedabra, se suma un horrorcrux
 
-practicar :: Mago -> Hechizo -> Postre -> Mago
-practicar hechizo postre mago = (sumarHorrorcruxSegun hechizo postre) . (aprender hechizo mago)
+--practicar :: Mago -> Hechizo -> Postre -> Mago
+--practicar hechizo postre mago = (sumarHorrorcruxSegun hechizo postre) . (aprender hechizo mago)
 
 aprender :: Hechizo -> Mago -> Mago
 aprender hechizo mago = mago{hechizosaprendidos = (hechizo : hechizosaprendidos mago)}
-	
+
 
 sumarHorrorcruxSegun :: Hechizo -> Postre -> Mago-> Mago
 sumarHorrorcruxSegun hechizo postre mago
-	|esEquivalenteAvaKedavra hechizo postre = sumarHorrorcrux mago 
-	|otherwise = mago
+        |esEquivalenteAvaKedavra hechizo postre = sumarHorrorcrux mago
+        |otherwise = mago
 
 sumarHorrorcrux :: Mago -> Mago
 sumarHorrorcrux mago = mago { horrorcruxes = 1 + horrorcruxes mago}
-	
+
 esEquivalenteAvaKedavra2 :: Hechizo -> Postre -> Bool
-esEquivalenteAvaKedavra2 hechizo postre = hechizo postre == avaKedavra postre 
+esEquivalenteAvaKedavra2 hechizo postre = hechizo postre == avaKedavra postre
 
 esEquivalenteAvaKedavra :: Hechizo -> Postre -> Bool
-esEquivalenteAvaKedavra hechizo postre = sabores postre == [] && temperatura postre == 0 
+esEquivalenteAvaKedavra hechizo postre = sabores postre == [] && temperatura postre == 0
 
 -- B dado un postre yun mago obtener su mejor hechizo , es es aquel de sus hechizos que deja el postre con mas cantidad de sabores luego de usarlo. 
 
@@ -115,7 +119,7 @@ elMejor postre [hechizo] = hechizo
 elMejor postre (primer : segundo : restohechizos)
     | esMejor postre primer segundo = elMejor postre (primer : restohechizos)
     | otherwise = elMejor postre (segundo : restohechizos)
-    
+
 esMejor :: Postre -> Hechizo -> Hechizo -> Bool
 esMejor postre hechizo1 hechizo2 = length (sabores (hechizo1 postre)) > length (sabores (hechizo2 postre))
 
