@@ -1,6 +1,5 @@
 module Library where
 import PdePreludat
-import qualified GHC.TypeNats as filter
 
 doble :: Number -> Number
 doble numero = numero + numero
@@ -69,14 +68,14 @@ estanListos = all.estaListo
 
 -- D) Dado un conjunto de postres en la mesa, conocer el peso promedio de los postres listos.
 
-promedioPostresListos :: Hechizo -> [Postre] -> Bool
-promedioPostresListos = (pesoPostresListos) 'div' (length conjuntoDePostresListos)
+promedioPostresListos :: Hechizo -> [Postre] -> Number
+promedioPostresListos hechizo postres = pesoPostresListos hechizo postres / length (conjuntoDePostresListos hechizo postres)
 
---pesoPostresListos :: Hechizo -> [Postre] -> Number
---pesoPostresListos =  sum .peso.(filter estaListo)
+pesoPostresListos :: Hechizo -> [Postre] -> Number
+pesoPostresListos hechizo postres =  sum (map peso $ conjuntoDePostresListos hechizo postres)
 
---conjuntoDePostresListos :: Hechizo -> [Postre] -> [Postre]
---conjuntoDePostresListos hechizo postres = filter estaListo postres
+conjuntoDePostresListos :: Hechizo -> [Postre] -> [Postre]
+conjuntoDePostresListos = filter.estaListo
 
 --2 MAGOS
 
@@ -85,15 +84,53 @@ data Mago = UnMago {
         horrorcruxes :: Number
         } deriving (Show, Eq)
 
--- A hacer que un mago asista a una clase y PRACTIQUE un echizo sobre un POSTRE se espera obtener el MAGO y agregar el hechizo a su lista de hechizos aprendidos
--- Ademas si el resultado del echizo es el mismo de aplicar avadakedabra, se suma un horrorcrux
+romina :: Mago
+romina = UnMago {
+    hechizosaprendidos = [incendio,immobulus],
+    horrorcruxes = 29
+    }
+edu :: Mago
+edu = UnMago {
+    hechizosaprendidos = [avaKedavra,diffindo 10],
+    horrorcruxes = 1
+    }
 
---practicar :: Mago -> Hechizo -> Postre -> Mago
---practicar hechizo postre mago = (sumarHorrorcruxSegun hechizo postre) . (aprender hechizo mago)
+
+-- Hacer que un mago asista a una clase y PRACTIQUE un hechizo sobre un POSTRE se espera obtener el MAGO 
+-- y agregar el hechizo a su lista de hechizos aprendidos
+-- Ademas si el resultado del hechizo es el mismo de aplicar avadakedabra, se suma un horrorcrux
+
+practicarHechizo :: Hechizo -> Postre -> Mago -> Mago
+practicarHechizo hechizo postre mago = UnMago {
+    hechizosaprendidos = hechizo : hechizosaprendidos mago,
+    horrorcruxes = nuevasHorrorcruxes hechizo postre + horrorcruxes mago
+}
+
+nuevasHorrorcruxes :: Hechizo -> Postre -> Number
+nuevasHorrorcruxes hechizo postre
+        | hechizo postre == avaKedavra postre = 1
+        | otherwise                           = 0
+
+--B Dado un postre y un mago obtener su mejor hechizo,
+-- que es aquel de sus hechizos que deja al postre con más cantidad de sabores luego de usarlo.
+mejorHechizoMago :: [Hechizo] -> Postre -> Mago -> Hechizo
+mejorHechizoMago [hechizo] postre mago = hechizo
+mejorHechizoMago (hechizo1:hechizo2:hechizos) postre mago 
+        | esMejor postre hechizo1 hechizo2 = mejorHechizoMago (hechizo1:hechizos) postre mago
+        | esMejor postre hechizo2 hechizo1 = mejorHechizoMago (hechizo2:hechizos) postre mago
+    
+esMejor :: Postre -> Hechizo -> Hechizo -> Bool
+esMejor postre hechizo1 hechizo2 = length(sabores (hechizo1 postre)) > length(sabores (hechizo2 postre))
+
+
+
+
+{-
+practicar :: Mago -> Hechizo -> Postre -> Mago
+practicar hechizo postre mago = (sumarHorrorcruxSegun hechizo postre) . (aprender hechizo mago)
 
 aprender :: Hechizo -> Mago -> Mago
 aprender hechizo mago = mago{hechizosaprendidos = (hechizo : hechizosaprendidos mago)}
-
 
 sumarHorrorcruxSegun :: Hechizo -> Postre -> Mago-> Mago
 sumarHorrorcruxSegun hechizo postre mago
@@ -122,113 +159,4 @@ elMejor postre (primer : segundo : restohechizos)
 
 esMejor :: Postre -> Hechizo -> Hechizo -> Bool
 esMejor postre hechizo1 hechizo2 = length (sabores (hechizo1 postre)) > length (sabores (hechizo2 postre))
-
-{-
-data Turista = UnTurista {
-    nivelCansancio :: Number
-    nivelStress :: Number
-    viajaSolo :: Bool
-    idiomas :: [String]
-} deriving (Show, Eq)
-
-
---Auxiliares
-bajarCansancio :: Number -> Turista -> Turista
-bajarCansancio numero  turista = Unturista{
-    nivelCansancio = nivelCansancio turista - numero
-}
-
-bajarStress :: Number -> Turista -> Turista
-bajarStress numero  turista = Unturista{
-    nivelStress = nivelStress turista - numero
-}
-
-aumentaCansancio :: Number -> Turista -> Turista
-aumentaCansancio numero turista = UnTurista {
-    nivelCansancio = nivelCansancio turista + numero
-}
-
-aumentaStress :: Number -> Turista -> Turista
-aumentaStress numero  turista = Unturista{
-    nivelStress = nivelStress turista + numero
-}
-
-
---
-type Excursion :: Turista -> Turista
-
-irAlaPlaya :: Excursion
-irAlaPlaya turista = 
-    | viajaSolo turista = bajarCansancio 5 turista
-    | otherwise         = bajarStress 1 turista
-
-apreciarElementoPaisaje :: String -> Turista -> Turista
-pareciarElementoPaisaje elemento turista = bajarStress (length elemento) turista
-
-salirAhablarIdioma :: String -> Turista -> Turista
-salirAhablarIdioma idioma turista = turista { 
-    idiomas = idioma : idiomas turista 
-    }
-
-caminar :: Number -> Turista -> Turista
-caminar minutos turista = (aumentaCansancio niveldeIntensidad) . (bajarStress niveldeIntensidad) turista
-
-niveldeIntensidad :: Number -> Number
-niveldeIntensidad minutos = 0.25*minutos
-
-paseoEnBarco :: String -> Turista -> Turista
-paseoEnBarco estadoMarea turista  
-    | estadoMarea == "fuerte" = (aumentaStress 6 . aumentaCansancio 10) turista
-    | estadoMarea == "moderada" = turista
-    | estadoMarea == "tranquila" = (salirAhablarIdioma "aleman" . apreciaElementoPaisaje "mar" . caminar 10) turista 
-    | otherwise = "estado no aceptado"
-
-Ana :: Turista
-Ana = UnTurista {
-    nivelCansancio = 0,
-    nivelStress = 21,
-    viajaSolo = False,
-    idiomas = [Español]
-}
-Beto :: Turista
-Beto = UnTurista {
-    nivelCansancio = 15,
-    nivelStress = 15,
-    viajaSolo = True,
-    idiomas = [Aleman]
-}
-Cathi :: Turista
-Cathi = UnTurista {
-    nivelCansancio = 15,
-    nivelStress = 15,
-    viajaSolo = True,
-    idiomas = [Aleman, Catalan]
-}
-
---2.a hacer que un turista haga una excursion, ademas de sufrir los efectos de la excursion reduce en un 10% su estress
-
-hacerExcursion :: Excursion -> Turista -> Turista
-hacerExcursion excursion turista = bajarStressPorc.excursion turista
-
---2.b 
-deltaExcursionSegun :: Number -> Excursion -> Turista -> Number
-deltaExcursionSegun ndice excursion turista = hacerExcursion.excursion turista
-
-
-
--- 3 Paquetes de excursiones llamados Tours
-
-type Tour :: [Excursion] 
-
-data Tour = UnTour {
-    nombreTour ::String
-    excursiones ::[String]
-}
--- completo lado b isla vecina
-
-completo :: Turista -> Turista
-completo turista =  (salirAhablarIdioma "melmequiano") . (caminar 40) . (apreciarElementoPaisaje "cascada") . (caminar 20). (aumentaStress cantidadDeExcursionesTour) turista
-
-cantidadDeExcursionesTour :: Tour -> Number
-cantidadDeExcursionesTour tour =  length.excursiones tour
 -}
