@@ -123,6 +123,29 @@ esMejor :: Postre -> Hechizo -> Hechizo -> Bool
 esMejor postre hechizo1 hechizo2 = length(sabores (hechizo1 postre)) > length(sabores (hechizo2 postre))
 
 
+-- 3 INFINITAMAGIA 
+--Construir una lista infinita de postres, y construir un mago con infinitos hechizos.
+listaInf :: [Postre]
+listaInf = repeat bizcocho
+
+magoInfinito = UnMago {
+   hechizosaprendidos = repeat incendio,
+   horrorcruxes = 2
+   }
+
+--Suponiendo que hay una mesa con infinitos postres, y pregunto si algún 
+--hechizo los deja listos ¿Existe alguna consulta que pueda hacer para que me sepa dar una respuesta? Justificar conceptualmente.
+--Suponiendo que un mago tiene infinitos hechizos ¿Existe algún caso en el que se puede
+-- encontrar al mejor hechizo? Justificar conceptualmente.
+
+
+
+
+
+
+
+
+
 
 
 {-
